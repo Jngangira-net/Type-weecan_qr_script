@@ -208,6 +208,27 @@ class MainWindow(QWidget):
     def setup_ui(self):
         _setup_ui(self)
 
+    def _on_bulk_progress(self, current: int, total: int, data: str):
+        self.progress_bar.setValue(current)
+        self.bulk_status.setText(f"Printing {current}/{total}: {data[:60]}…")
+
+    def _on_bulk_finished(self, printed: int):
+        self.progress_bar.setVisible(False)
+        self.print_all_button.setEnabled(True)
+        self.load_csv_button.setEnabled(True)
+        self.cancel_bulk_button.setEnabled(False)
+        self.bulk_status.setText(f"Done — printed {printed} item(s)")
+        QMessageBox.information(
+            self, "Bulk print", f"Successfully printed {printed} item(s)."
+        )
+
+    def _on_bulk_failed(self, message: str):
+        self.progress_bar.setVisible(False)
+        self.print_all_button.setEnabled(True)
+        self.load_csv_button.setEnabled(True)
+        self.cancel_bulk_button.setEnabled(False)
+        QMessageBox.critical(self, "Print error", message)
+
 
 def _setup_ui(self):
     self.setWindowTitle("QR Code Printer")
@@ -418,26 +439,28 @@ def _setup_ui(self):
             self._worker.cancel()
             self.bulk_status.setText("Cancelling…")
 
-    def _on_bulk_progress(self, current: int, total: int, data: str):
-        self.progress_bar.setValue(current)
-        self.bulk_status.setText(f"Printing {current}/{total}: {data[:60]}…")
-
-    def _on_bulk_finished(self, printed: int):
-        self.progress_bar.setVisible(False)
-        self.print_all_button.setEnabled(True)
-        self.load_csv_button.setEnabled(True)
-        self.cancel_bulk_button.setEnabled(False)
-        self.bulk_status.setText(f"Done — printed {printed} item(s)")
-        QMessageBox.information(
-            self, "Bulk print", f"Successfully printed {printed} item(s)."
-        )
-
-    def _on_bulk_failed(self, message: str):
-        self.progress_bar.setVisible(False)
-        self.print_all_button.setEnabled(True)
-        self.load_csv_button.setEnabled(True)
-        self.cancel_bulk_button.setEnabled(False)
-        QMessageBox.critical(self, "Print error", message)
+    # Original handlers were nested in _setup_ui, so self._on_bulk_* did not
+    # refer to them. They are now methods on MainWindow.
+    # def _on_bulk_progress(self, current: int, total: int, data: str):
+    #     self.progress_bar.setValue(current)
+    #     self.bulk_status.setText(f"Printing {current}/{total}: {data[:60]}…")
+    #
+    # def _on_bulk_finished(self, printed: int):
+    #     self.progress_bar.setVisible(False)
+    #     self.print_all_button.setEnabled(True)
+    #     self.load_csv_button.setEnabled(True)
+    #     self.cancel_bulk_button.setEnabled(False)
+    #     self.bulk_status.setText(f"Done — printed {printed} item(s)")
+    #     QMessageBox.information(
+    #         self, "Bulk print", f"Successfully printed {printed} item(s)."
+    #     )
+    #
+    # def _on_bulk_failed(self, message: str):
+    #     self.progress_bar.setVisible(False)
+    #     self.print_all_button.setEnabled(True)
+    #     self.load_csv_button.setEnabled(True)
+    #     self.cancel_bulk_button.setEnabled(False)
+    #     QMessageBox.critical(self, "Print error", message)
 
     self.generate_button.clicked.connect(
         lambda checked=False: generate_qr(self)
